@@ -5,11 +5,13 @@ import { handleInputErrors } from '../middleware/validation';
 import { TaskController } from '../controllers/TaskController';
 import { ProjectExists } from '../middleware/project';
 import { TaskBelongsToProject, TaskExists } from '../middleware/task';
+import { authenticate } from '../middleware/auth';
 
 const router = Router();
 
 router.post(
   '/',
+  authenticate,
   body('projectName')
     .notEmpty()
     .withMessage('El nombre del proyecto es obligatorio'),
