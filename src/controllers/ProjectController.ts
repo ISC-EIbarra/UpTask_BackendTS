@@ -4,7 +4,8 @@ import Project from '../models/Project';
 export class ProjectController {
   static createProject = async (req: Request, res: Response) => {
     const project = new Project(req.body);
-    console.log(req.user);
+    project.manager = req.user.id;
+
     try {
       await project.save();
       res.send('Proyecto creado correctamente');
@@ -15,7 +16,9 @@ export class ProjectController {
 
   static getAllProjects = async (req: Request, res: Response) => {
     try {
-      const projects = await Project.find({});
+      const projects = await Project.find({
+        $or: [{ manager: { $in: req.user.id } }],
+      });
       res.json(projects);
     } catch (error) {
       console.log(error);
@@ -28,6 +31,11 @@ export class ProjectController {
       const project = await Project.findById(id).populate('tasks');
       if (!project) {
         const error = new Error('Proyecto no encontrado');
+        return res.status(404).json({ error: error.message });
+      }
+
+      if (project.manager.toString() !== req.user.id.toString()) {
+        const error = new Error('Acción no valida');
         return res.status(404).json({ error: error.message });
       }
 
@@ -44,6 +52,13 @@ export class ProjectController {
 
       if (!project) {
         const error = new Error('Proyecto no encontrado');
+        return res.status(404).json({ error: error.message });
+      }
+
+      if (project.manager.toString() !== req.user.id.toString()) {
+        const error = new Error(
+          'No tienes permisos, sólo el Manager puede actualizar un proyecto'
+        );
         return res.status(404).json({ error: error.message });
       }
 
@@ -65,6 +80,13 @@ export class ProjectController {
 
       if (!project) {
         const error = new Error('Proyecto no encontrado');
+        return res.status(404).json({ error: error.message });
+      }
+
+      if (project.manager.toString() !== req.user.id.toString()) {
+        const error = new Error(
+          'No tienes permisos, sólo el Manager puede eliminar un proyecto'
+        );
         return res.status(404).json({ error: error.message });
       }
 
